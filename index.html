@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#09234b">
+<title>JROTC HELP</title>
+<style>
+:root{--navy:#09234b;--gold:#e2b84e;--white:#fff;--bg:#f3f6fb;--ink:#17243b;--muted:#64748b;--line:#dce3ee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--navy);color:white;padding:18px 16px 14px;border-bottom:4px solid var(--gold)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.eyebrow{font-size:11px;letter-spacing:2px;color:#f1ce70;font-weight:800}.brand{font-size:27px;font-weight:850;margin:3px 0}.sub{font-size:12px;opacity:.85}
+button,input,textarea,select{font:inherit}button{cursor:pointer}.refresh{border:0;border-radius:10px;background:white;color:var(--navy);font-weight:800;padding:10px 12px}
+#status{min-height:17px;font-size:12px;color:#f1ce70;margin-top:9px}
+nav{display:flex;gap:5px;overflow-x:auto;padding:9px;background:white;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:2}
+.tab{white-space:nowrap;border:0;border-radius:9px;padding:10px 12px;background:#eef2f8;color:#243752;font-weight:750}.tab.active{background:var(--navy);color:white}
+main{max-width:760px;margin:auto;padding:16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:15px;margin:0 0 12px;box-shadow:0 2px 6px #09234b08}
+h2{font-size:21px;margin:0 0 8px;color:var(--navy)}h3{font-size:15px;margin:0 0 8px}.muted{color:var(--muted);font-size:13px;line-height:1.5}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.stat{background:#f1f5fb;border-radius:10px;padding:12px}.stat strong{display:block;color:var(--navy);font-size:22px}
+.btn{display:inline-block;background:var(--navy);color:white;border:0;border-radius:9px;padding:11px 14px;font-weight:750;margin:4px 4px 4px 0}.gold{background:var(--gold);color:#17243b}.danger{background:#fff0ef;color:#8c2924}
+label{font-size:13px;font-weight:700;display:block;margin-top:8px}.field{display:block;width:100%;border:1px solid #cbd5e3;border-radius:9px;padding:11px;margin:5px 0 12px;background:white;color:var(--ink)}textarea{resize:vertical}
+.item{border-top:1px solid #e5eaf1;padding:10px 0;overflow-wrap:anywhere}.item p{white-space:pre-wrap}
+.hero{background:var(--navy);color:white;border-radius:14px;padding:17px;margin-bottom:12px}.hero h2{color:white}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
+@media(min-width:650px){main{padding:22px}.brand{font-size:30px}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="eyebrow">NAVY • GOLD • WHITE</div><div class="brand">JROTC HELP</div><div class="sub">Your cadet success dashboard</div></div><button class="refresh" id="refresh">↻ Refresh</button></div><div id="status" role="status">Ready</div></header>
+<nav id="nav"><button class="tab active" data-tab="Home">⌂ Home</button><button class="tab" data-tab="PT Tracking">PT Tracking</button><button class="tab" data-tab="Awards">Awards</button><button class="tab" data-tab="Study">Study</button><button class="tab" data-tab="Profile">Profile</button></nav>
+<main id="content"></main><footer>JROTC HELP • Independent prototype • Not an official Navy application</footer>
+<script>
+(()=>{
+const KEY='jrotc-help-standalone-v1';
+const defaults=()=>({profile:{name:'Cadet',rank:'NS3',role:'Bravo XO / PT Commander'},pt:[],awards:[],quizBest:0});
+const clone=x=>JSON.parse(JSON.stringify(x));
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY)||'null');if(!x||typeof x!=='object')return defaults();let d=defaults();return {...d,...x,profile:{...d.profile,...x.profile},pt:Array.isArray(x.pt)?x.pt:[],awards:Array.isArray(x.awards)?x.awards:[]}}catch{return defaults()}}
+let data=load(),tab='Home';
+const content=document.querySelector('#content'),status=document.querySelector('#status');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const card=(title,body)=>`<section class="card"><h3>${title}</h3>${body}</section>`;
+const btn=(label,action,cls='')=>`<button class="btn ${cls}" data-action="${action}">${label}</button>`;
+const field=(label,id,value='',type='text',placeholder='')=>`<label for="${id}">${label}</label><input class="field" id="${id}" type="${type}" value="${esc(value)}" placeholder="${esc(placeholder)}">`;
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data));status.textContent='✓ Saved on this device';return true}catch{status.textContent='Browser storage is unavailable. Export a backup to keep your records.';return false}}
+function render(){
+ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+ let h='';
+ if(tab==='Home'){
+ h=`<section class="hero"><div class="eyebrow">WELCOME BACK</div><h2>Ready, ${esc(data.profile.name)}?</h2><div>${esc(data.profile.rank)} • ${esc(data.profile.role)}</div></section><div class="row"><div class="stat"><strong>${data.pt.length}</strong><span class="muted">PT records</span></div><div class="stat"><strong>${data.awards.length}</strong><span class="muted">Achievements logged</span></div></div>`;
+ h+=card('Cadet tools','<p class="muted">Choose a section to manage your progress.</p>'+btn('＋ Log PT','go-pt')+btn('＋ Add achievement','go-awards')+btn('Start study quiz','go-study')+btn('Edit profile','go-profile'));
+ h+=card('Reminder','<p class="muted">Record accomplishments while they are fresh. Confirm official award requirements with your NJROTC instructor.</p>');
+ }else if(tab==='PT Tracking'){
+ h='<h2>PT Tracking</h2><p class="muted">Record your results and track progress over time.</p>';
+ h+=card('Add a PT record',`<form id="pt-form">${field('Date','pt-date',new Date().toISOString().slice(0,10),'date')}${field('Push-ups','push','','number','Number completed')}${field('Plank (seconds)','plank','','number','e.g. 180')}${field('Run time (minutes)','run','','number','Optional: total minutes')}<label for="pt-note">Notes</label><textarea id="pt-note" class="field" rows="2" placeholder="Event, goal, or notes"></textarea><button class="btn" type="submit">Save PT record</button></form>`);
+ h+=card('Saved records',data.pt.length?data.pt.slice().reverse().map((p,i)=>`<div class="item"><b>${esc(p.date)}</b><div class="muted">Push-ups: ${esc(p.push||'—')} • Plank: ${esc(p.plank||'—')} sec • Run: ${esc(p.run||'—')} min</div><div class="muted">${esc(p.note||'')}</div>${btn('Delete','delete-pt-'+(data.pt.length-1-i),'danger')}</div>`).join(''):'<p class="muted">No PT records yet.</p>');
+ }else if(tab==='Awards'){
+ h='<h2>Awards & Achievements</h2><p class="muted">Keep a personal log of leadership, service, academics, fitness, and teamwork. This is not an official award submission.</p>';
+ h+=card('Add an accomplishment',`<form id="award-form">${field('Title','award-title','','text','e.g. Led and organized PT meet')}<label for="award-category">Category</label><select id="award-category" class="field"><option>Leadership</option><option>Physical Fitness</option><option>Teamwork</option><option>Academics</option><option>Community Service</option><option>Drill</option><option>Aviation / STEM</option><option>Other</option></select><label for="award-detail">What you did and its impact</label><textarea id="award-detail" class="field" rows="4" placeholder="Describe your actions, responsibility, and results."></textarea><button class="btn" type="submit">Save achievement</button></form>`);
+ h+=card('Achievement log',data.awards.length?data.awards.slice().reverse().map((a,i)=>`<div class="item"><b>${esc(a.title)}</b><div class="muted">${esc(a.category)} • ${esc(a.date)}</div><p>${esc(a.detail)}</p>${btn('Delete','delete-award-'+(data.awards.length-1-i),'danger')}</div>`).join(''):'<p class="muted">Your accomplishments will appear here.</p>');
+ }else if(tab==='Study'){
+ h='<h2>Study & Quiz</h2><p class="muted">Practice basic leadership and cadet skills. Confirm program-specific rules with your instructor.</p>';
+ h+=card('Quick quiz',`<form id="quiz-form"><p><b>1. What is a key purpose of teamwork?</b></p><label><input type="radio" name="q1" value="a" required> Coordinate toward a shared goal</label><label><input type="radio" name="q1" value="b"> Avoid communicating</label><p><b>2. If instructions are unclear, you should…</b></p><label><input type="radio" name="q2" value="a" required> Guess without asking</label><label><input type="radio" name="q2" value="b"> Respectfully ask for clarification</label><p><b>3. What strengthens an achievement entry?</b></p><label><input type="radio" name="q3" value="a" required> Specific actions and results</label><label><input type="radio" name="q3" value="b"> Only saying “I did a good job”</label><p><button class="btn" type="submit">Check answers</button></p></form><div id="quiz-result"></div><p class="muted">Best score saved: ${Number(data.quizBest)||0}/3</p>`);
+ }else if(tab==='Profile'){
+ h='<h2>Cadet Profile</h2><p class="muted">Customize your dashboard. Avoid entering private or sensitive information.</p>';
+ h+=card('Your information',`<form id="profile-form">${field('Display name','name',data.profile.name)}${field('Cadet rank','rank',data.profile.rank)}${field('Leadership role','role',data.profile.role)}<button class="btn" type="submit">Save profile</button></form>`);
+ h+=card('Your saved data','<p class="muted">Records are saved in this browser on this device; they are not synced to an account. Export a backup before clearing browser data.</p>'+btn('↻ Reload saved data','reload-data')+btn('Export backup','export-data','gold')+btn('Clear all saved data','clear-data','danger'));
+ }
+ content.innerHTML=h;
+}
+document.querySelector('#nav').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){tab=b.dataset.tab;render()}});
+content.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action;
+ if(a.startsWith('go-')){tab=({'go-pt':'PT Tracking','go-awards':'Awards','go-study':'Study','go-profile':'Profile'})[a]||'Home';render()}
+ else if(a.startsWith('delete-pt-')){data.pt.splice(Number(a.slice(10)),1);save();render()}
+ else if(a.startsWith('delete-award-')){data.awards.splice(Number(a.slice(13)),1);save();render()}
+ else if(a==='reload-data'){data=load();render();status.textContent='↻ Reloaded saved data'}
+ else if(a==='export-data'){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='jrotc-help-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);status.textContent='Backup export started'}
+ else if(a==='clear-data'&&confirm('Delete all records saved in this browser? Export a backup first if you may need them.')){data=defaults();save();tab='Home';render();status.textContent='Saved records cleared'}
+});
+document.querySelector('#refresh').addEventListener('click',()=>{data=load();render();status.textContent='↻ Refreshed from saved data'});
+content.addEventListener('submit',e=>{e.preventDefault();
+ if(e.target.id==='pt-form'){let push=document.querySelector('#push').value,plank=document.querySelector('#plank').value,run=document.querySelector('#run').value;if([push,plank,run].some(x=>x!==''&&Number(x)<0)){status.textContent='Enter zero or a positive number.';return}data.pt.push({date:document.querySelector('#pt-date').value||new Date().toISOString().slice(0,10),push,plank,run,note:document.querySelector('#pt-note').value});save();render()}
+ else if(e.target.id==='award-form'){let title=document.querySelector('#award-title').value.trim();if(!title){status.textContent='Add an achievement title first.';return}data.awards.push({title,category:document.querySelector('#award-category').value,detail:document.querySelector('#award-detail').value.trim(),date:new Date().toISOString().slice(0,10)});save();render()}
+ else if(e.target.id==='profile-form'){data.profile={name:document.querySelector('#name').value.trim()||'Cadet',rank:document.querySelector('#rank').value.trim()||'Cadet',role:document.querySelector('#role').value.trim()||'Cadet'};save();render()}
+ else if(e.target.id==='quiz-form'){const f=new FormData(e.target),score=(f.get('q1')==='a')+(f.get('q2')==='b')+(f.get('q3')==='a');data.quizBest=Math.max(Number(data.quizBest)||0,score);save();const r=document.querySelector('#quiz-result');r.innerHTML=`<p><b>You scored ${score}/3.</b> ${score===3?'Excellent work!':'Review the answers and try again.'}</p><p class="muted">Correct answers: 1-A, 2-B, 3-A.</p>`}
+});
+render();
+})();
+</script>
+</body>
+</html>
